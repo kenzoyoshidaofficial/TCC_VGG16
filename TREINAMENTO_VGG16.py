@@ -17,10 +17,10 @@ drive.mount('/content/drive')
 # Parâmetros de repetição, Fold e modelo
 REPETICAO = 4
 FOLD = 2
-SD_10 = False
+SD_10 = True
 SEED_TREINO = REPETICAO * 10 + FOLD
 
-# Carregamento das divisões(Split) previamente separadas  
+# Carregamento das divisões(Split) previamente separadas
 Divisao = f'/content/drive/MyDrive/TCC_Splits_25/split_R{REPETICAO}_F{FOLD}.csv'
 dados = pd.read_csv(Divisao)
 tf.keras.backend.clear_session()
@@ -133,12 +133,11 @@ modelo.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.00001), loss='
 parada_FT = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=12, min_delta=0.0001, restore_best_weights=True)
 historico_FT = modelo.fit( dataset_treino, validation_data=dataset_validacao, epochs=40, callbacks=[parada_FT])
 
-# Resultados e pesos salvos na pasta do Google Drive 
+# Resultados e pesos salvos na pasta do Google Drive
 Caminho_Resultados = '/content/drive/MyDrive/TCC_Resultados'
 os.makedirs(Caminho_Resultados, exist_ok=True)
 NOME = f'{"SD_10" if SD_10 else "BASE"}_R{REPETICAO}_F{FOLD}'
 
-modelo.save_weights(Caminho_Resultados + '/' + NOME + '.weights.h5')
 resultados_treino = modelo.evaluate(criar_dataset(treino))
 resultados_validacao = modelo.evaluate(dataset_validacao)
 resultados_teste = modelo.evaluate(imagens_teste, classes_teste)
@@ -254,12 +253,6 @@ for nome, matriz in matrizes.items():
 tabela_classes = pd.DataFrame(resultados_classes)
 tabela_classes.to_csv(Caminho_Resultados + '/' + NOME + '_classes.csv', index=False)
 
-#Salvamento do Histórico do treinamento
-tabela_TL = pd.DataFrame(historico.history)
-tabela_TL.to_csv(Caminho_Resultados + '/' + NOME + '_TL.csv', index=False)
-tabela_FT = pd.DataFrame(historico_FT.history)
-tabela_FT.to_csv(Caminho_Resultados + '/' + NOME + '_FT.csv', index=False)
-
-# Salva o resumo do experimento 
+# Salva o resumo do experimento
 resumo = pd.DataFrame([{'Modelo': 'SD_10' if SD_10 else 'BASE','Repeticao': REPETICAO,'Fold': FOLD,'Seed': SEED_TREINO,'Macro_F2_Clean': tabela.loc[tabela['Condicao'] == 'Clean', 'F2'].iloc[0],'Macro_F2_Resolucao': f2_resolucao,'Macro_F2_Blur': f2_blur,'Macro_F2_Combinado': f2_combinado}])
 resumo.to_csv(Caminho_Resultados + '/' + NOME + '_resumo.csv', index=False)
